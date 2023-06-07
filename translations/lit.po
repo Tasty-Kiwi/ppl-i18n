@@ -66,7 +66,7 @@ msgstr "Tamsiai mėlyna"
 #. "Update available (0.4.122)"
 #: ../client/application/utils/version.cpp:72
 msgid "Update available %s"
-msgstr "Galima nauja versija %s"
+msgstr "Galima nauja versija"
 
 #: ../client/application/game/game.cpp:176
 msgid "Quick pause"
@@ -74,7 +74,7 @@ msgstr "Greita pauzė"
 
 #: ../client/application/game/game.cpp:182
 msgid "Quick pause %s"
-msgstr "Greitoji pauzė %s"
+msgstr "Greitoji pauzė"
 
 #: ../client/application/game/ui/pause_ui.cpp:27
 msgid "Continue"
@@ -138,11 +138,11 @@ msgstr "Bendruomenės Lygiai"
 
 #: ../client/application/game/ui/shared_strings.cpp:23
 msgid "play count: %s"
-msgstr "žaista kartų: %s"
+msgstr "žaista kartų:"
 
 #: ../client/application/game/ui/shared_strings.cpp:27
 msgid "time played: %s"
-msgstr "žaista laiko: %s"
+msgstr "žaista laiko:"
 
 #: ../client/application/game/ui/shared_strings.cpp:31
 msgid "Casual"
