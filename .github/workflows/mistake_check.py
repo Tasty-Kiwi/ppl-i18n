@@ -1,9 +1,10 @@
 import re
 import sys
 import urllib.request as r
+import json
 
 number = sys.argv[1]
-page = r.urlopen(f'https://github.com/pewpewlive/ppl-i18n/pull/{number}.diff').read().decode("utf8").split('\n')
+page = r.urlopen(f'https://github.com/Tasty-Kiwi/ppl-i18n/pull/{number}.diff').read().decode("utf8").split('\n')
 filename = page[0].split(' ')[2][2:]
 page = page[4:]
 
@@ -45,13 +46,26 @@ def parse(page):
   return parsed_strings
 
 strings = parse(page)
-final_output = ""
+final_json = {
+    "pr_id": int(number),
+    "mistakes": [],
+}
+
 
 for key in strings:
   if strings[key]["condition"] == "colors_invalid":
-    final_output += f'w // col // {strings[key]["line"]} // {strings[key]["id"]} // {strings[key]["str"]} /// '
+    final_json["mistakes"].append({
+        "mistake_type": "invalid_color",
+        "line": strings[key]["line"],
+        "id": strings[key]["id"],
+        "str": strings[key]["str"]
+    })
   elif strings[key]["condition"] == "s_invalid":
-    final_output += f'e // s // {strings[key]["line"]} // {strings[key]["id"]} // {strings[key]["str"]} /// '
+    final_json["mistakes"].append({
+        "mistake_type": "invalid_s",
+        "line": strings[key]["line"],
+        "id": strings[key]["id"],
+        "str": strings[key]["str"]
+    })
 
-final_output += "0"
-print(final_output)
+print(json.dumps(final_json))

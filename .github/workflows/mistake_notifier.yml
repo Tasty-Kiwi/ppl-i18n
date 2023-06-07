@@ -5,89 +5,64 @@ on:
     workflows: [Mistake Checker]
     types:
       - completed
-      
+
 jobs:
   notify:
     name: Notify of mistakes
     runs-on: ubuntu-latest
-    
+
     permissions:
       pull-requests: write
       issues: write
-    
+
     steps:
       - name: Download mistake checker results
-        uses: actions/github-script@v3.1.0
+        uses: actions/download-artifact@v3
         with:
-          script: |
-            let allArtifacts = await github.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: ${{ github.event.workflow_run.id }},
-            });
-            
-            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "mistakes"
-            })[0];
-            
-            let download = await github.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
-            });
-            
-            let fs = require('fs');
-            fs.writeFileSync('${{ github.workspace }}/pr.zip', Buffer.from(download.data));
-            
-      - run: unzip pr.zip
+          name: mistakes
+          path: ${{ github.workspace }}/mistakes.json
 
       - name: Output detected mistakes if any
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            let fs = require('fs');
-            const pr_number = Number(fs.readFileSync('./number.txt'));
-            const mistakes = fs.readFileSync('./mistakes.txt').toString().split(" /// ");
+            const fs = require('fs');
+            const mistakes_json = JSON.parse(fs.readFileSync('./mistakes.json'))
 
-            let message = '';
+            let message = "";
 
-            if (mistakes[0] !== '0' && mistakes[0] !== '0\n') {
+            if (mistakes_json.length > 0) {
               message += 'Thank you for contributing!\n\n';
               message += 'To keep translations error-free, we check them for mistakes. The files you changed seem to contain some, no worries though, they can be fixed! ';
               message += `See helpful info below:\n\`\`\`diff\n`;
-              message += '===================================================================\n';
-              for (mistake of mistakes) {
-                mistake_info = mistake.split(' // ');
-                if (mistake_info[0] === '0' || mistake_info[0] === '\n0') break;
+              message += "===================================================================\n";
 
-                message += `@@ Line: ${mistake_info[2]} @@\n`;
+              mistakes_json.mistakes.forEach((mistake) => {
+                message += `@@ Line: ${mistake.line} @@\n`;
 
-                switch (mistake_info[0]) {
-                  case 'e':
-                    message += '--- Non-Matching use of %s\n';
-                    message += `+ msgid "${mistake_info[3]}"\n`;
-                    message += `- msgstr "${mistake_info[4]}"\n`;
+                switch (mistake.mistake_type) {
+                  case "invalid_s":
+                    message += '--- Missing %s\n';
+                    message += `+ msgid "${mistake.id}"\n`;
+                    message += `- msgstr "${mistake.str}"\n`;
                     break;
-                  case 'w':
-                    message += '!!! Possible misuse of colors\n';
-                    message += `+ msgid "${mistake_info[3]}"\n`;
-                    message += `- msgstr "${mistake_info[4]}"\n`;
+                  case "invalid_color":
+                    message += '!!! Missing colors\n';
+                    message += `+ msgid "${mistake.id}"\n`;
+                    message += `- msgstr "${mistake.str}"\n`;
                     break;
                 }
-                
-                if (mistakes.indexOf(mistake) !== mistakes.length - 2) {
-                  message += '***************\n';
-                }
-              }
 
-              message += '===================================================================';
+                message += '***************\n'
+              })
             }
+
+            message += "===================================================================\n```";
 
             if (message !== "") {
               github.rest.issues.createComment({
-                issue_number: pr_number,
+                issue_number: mistakes_json.pr_id,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 body: message

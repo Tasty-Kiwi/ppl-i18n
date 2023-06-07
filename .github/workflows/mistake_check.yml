@@ -28,25 +28,22 @@ jobs:
         id: mistakes
         shell: bash
         run: |
-          echo $(python ${{ github.workspace }}/.github/workflows/mistake_check.py ${{ github.event.pull_request.number }}) > mistakes.txt
-          echo ${{ github.event.pull_request.number }} > number.txt
+          echo $(python ${{ github.workspace }}/.github/workflows/mistake_check.py ${{ github.event.pull_request.number }}) > mistakes.json
           
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v3.1.1
         with:
           name: mistakes
           path: |
-            mistakes.txt
-            number.txt
+            mistakes.json
             
       - name: Output detected mistakes if any
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            let fs = require('fs');
-            const mistakes = fs.readFileSync('./mistakes.txt').toString().split(" /// ");
+            const fs = require('fs');
+            const mistakes_json = JSON.parse(fs.readFileSync('./mistakes.json'));
 
-            if (mistakes[0] !== "0")
-              if (mistakes.map(mistake => mistake.split(" // ")[0]).includes("e"))
-                  core.setFailed("Mistakes found! Check comment for more details");
+            if (mistakes_json.mistakes.length > 0)
+              core.setFailed("Mistakes found! Check comment for more details");
