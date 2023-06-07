@@ -20,7 +20,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: mistakes
-          path: ${{ github.workspace }}/mistakes.json
+          path: mistakes.json
 
       - name: Output detected mistakes if any
         uses: actions/github-script@v6
